@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TecnologizApp · Demo Pinturería</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: barra superior con 4 vistas (A vendedor, B cliente, C pintor, dueño); catálogo + pedido en 2 columnas que se apilan en el celular */
+  --bg:#f2f3ef; --surface:#ffffff; --surface-2:#eaece6; --ink:#1a1d22; --muted:#5b636e; --line:#d8dbd4;
+  --a:#c4521d; --b:#1f7f55; --c:#2443c0; --on-accent:#ffffff;
+  --ok:#1d7448; --warn:#9a6412; --crit:#b42318;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131519; --surface:#1b1e23; --surface-2:#252930; --ink:#eceef0; --muted:#a3aab4; --line:#31363e;
+    --a:#f08450; --b:#4cc08a; --c:#7d97ff; --on-accent:#101216;
+    --ok:#4fc68e; --warn:#e3a94b; --crit:#f26a5f; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131519; --surface:#1b1e23; --surface-2:#252930; --ink:#eceef0; --muted:#a3aab4; --line:#31363e;
+  --a:#f08450; --b:#4cc08a; --c:#7d97ff; --on-accent:#101216;
+  --ok:#4fc68e; --warn:#e3a94b; --crit:#f26a5f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0;line-height:1.2}
+h2{font-size:18px}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:13px}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--m,var(--c)) 55%,transparent);outline-offset:2px}
+
+header.top{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding:10px 16px 0;display:flex;flex-direction:column;gap:6px}
+.brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chipset{display:flex;gap:3px}
+.chipset i{width:9px;height:24px;border-radius:2px;display:block}
+.brand h1{font-size:19px}
+.brand .sub{color:var(--muted);font-size:12.5px}
+.flag{margin-left:auto;font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:3px 10px}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tab{appearance:none;border:0;background:none;font:600 14px var(--body);color:var(--muted);padding:9px 12px 10px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--tc)}
+.k{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:6px;background:var(--tc);color:var(--on-accent);font:800 12px var(--display)}
+.cnt{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--crit);color:#fff;font-size:11.5px;font-weight:700}
+
+main{max-width:1180px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.intro{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-left:4px solid var(--m);background:var(--surface);border-radius:var(--r);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.intro p{color:var(--muted);max-width:75ch}
+.mb{display:inline-grid;place-items:center;width:28px;height:28px;flex:none;border-radius:7px;background:var(--m);color:var(--on-accent);font:800 14px var(--display)}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:1fr}}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cardhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 14px var(--body);padding:8px 13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;line-height:1.25;text-align:center}
+.btn:hover{border-color:var(--m)}
+.btn.primary{background:var(--m);border-color:var(--m);color:var(--on-m,var(--on-accent))}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.big{padding:12px 16px;font-size:15px;width:100%}
+.btn.mp{background:#009ee3;border-color:#009ee3;color:#fff;width:100%;padding:12px;font-size:15px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:5px 10px;font-size:13px}
+
+.in{font:500 15px var(--body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.in:focus{border-color:var(--m)}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+label.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+label.chk input{margin-top:3px;accent-color:var(--m);width:17px;height:17px}
+label.chk small{display:block;color:var(--muted)}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font:600 13px var(--body);color:var(--muted);cursor:pointer}
+.chip:hover{color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--m);border-color:var(--m);color:var(--on-accent)}
+
+.plist{list-style:none;margin:0;padding:0;max-height:560px;overflow:auto;border-top:1px solid var(--line)}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.pname{font-weight:600;display:block}
+.ppres{font-size:13px;color:var(--muted);display:block}
+.pprice{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pprice s{display:block;font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);padding:14px 2px}
+.btn.add{min-width:84px}
+
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.qty button{width:32px;height:32px;border:0;background:var(--surface-2);color:var(--ink);font:700 17px var(--body);cursor:pointer}
+.qty button:hover{background:color-mix(in srgb,var(--m) 18%,var(--surface-2))}
+.qty span{min-width:32px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+
+.lines{list-style:none;margin:0;padding:0}
+.line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.line .num{min-width:92px;text-align:right;font-weight:600}
+.glabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding-top:6px}
+.sumrow{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+.tot{display:flex;justify-content:space-between;gap:10px;font:800 21px var(--display);font-variant-numeric:tabular-nums;padding-top:4px}
+.timer{font-size:13px;font-weight:700;color:var(--m);font-variant-numeric:tabular-nums;border:1px solid color-mix(in srgb,var(--m) 40%,var(--line));padding:2px 9px;border-radius:999px}
+.calc{font-size:13px;color:var(--muted);background:var(--surface-2);padding:8px 10px;border-radius:8px;font-variant-numeric:tabular-nums}
+.hook{font-size:13.5px;border-left:3px solid var(--m);padding:6px 10px;background:color-mix(in srgb,var(--m) 7%,var(--surface))}
+.done{border:1px solid color-mix(in srgb,var(--ok) 45%,var(--line));background:color-mix(in srgb,var(--ok) 7%,var(--surface));border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.msg{white-space:pre-wrap;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--surface-2);padding:10px;border-radius:8px;max-height:220px;overflow:auto;margin:0}
+
+.bwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:880px){.bwrap{grid-template-columns:1fr}}
+h2 .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--m);color:var(--on-accent);font-size:13px;margin-right:8px;vertical-align:2px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit;display:flex;flex-direction:column;gap:2px}
+.opt small{color:var(--muted);font-size:12.5px}
+.opt:hover{border-color:color-mix(in srgb,var(--m) 50%,var(--line))}
+.opt[aria-pressed="true"]{border-color:var(--m);box-shadow:inset 0 0 0 1px var(--m);background:color-mix(in srgb,var(--m) 8%,var(--surface))}
+.area{font-weight:700;font-variant-numeric:tabular-nums}
+.x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;text-decoration:underline;padding:2px}
+
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:880px){.kpis{grid-template-columns:1fr}}
+.kpi{border-top:4px solid var(--kc)}
+.kpi dl{display:grid;grid-template-columns:1fr auto;gap:7px 10px;margin:0}
+.kpi dt{color:var(--muted);font-size:13.5px}
+.kpi dd{margin:0;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.kpi .big{font:800 26px var(--display);font-variant-numeric:tabular-nums}
+.orders{list-style:none;margin:0;padding:0}
+.order{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,auto);gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.order .who b{display:block}
+.odet{grid-column:1/-1;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.odet summary{cursor:pointer;padding:8px 12px;font-weight:600;font-size:14px;color:var(--muted)}
+.odet[open] summary{border-bottom:1px solid var(--line);color:var(--ink)}
+.detgrid{display:grid;grid-template-columns:minmax(200px,260px) minmax(0,1fr);gap:16px;padding:12px}
+@media (max-width:720px){.detgrid{grid-template-columns:1fr}}
+.dinfo{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:14px;align-content:start}
+.dinfo dt{color:var(--muted)} .dinfo dd{margin:0;font-weight:600}
+table.det{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
+.det th,.det td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.det thead th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.det .r{text-align:right}
+.det tfoot th,.det tfoot td{border-bottom:0;font-size:15px}
+.oact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+@media (max-width:720px){.order{grid-template-columns:auto minmax(0,1fr) auto}.oact{grid-column:1/-1;justify-content:flex-start}}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.pill.act{background:color-mix(in srgb,var(--crit) 13%,transparent);color:var(--crit)}
+.pill.prog{background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.done{background:var(--surface-2);color:var(--muted)}
+.owner-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:880px){.owner-grid{grid-template-columns:1fr}}
+.prices .prow{grid-template-columns:minmax(0,1fr) 130px}
+.prices .in{text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+table.cmp{border-collapse:collapse;width:100%;min-width:680px}
+.cmp th,.cmp td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+.cmp thead th{font:700 15px var(--display);white-space:nowrap}
+.cmp th[scope="row"]{color:var(--muted);font-weight:600;width:20%}
+.cmp .mb{width:22px;height:22px;font-size:12px;margin-right:6px;vertical-align:-5px}
+
+.modal-bg{position:fixed;inset:0;background:rgba(8,10,14,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal-bg.open{display:flex}
+.phone{width:min(370px,100%);background:var(--surface);color:var(--ink);border-radius:28px;border:9px solid #0d0f12;padding:16px;max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.phone-head{display:flex;gap:10px;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.logo{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:conic-gradient(var(--a) 0 33%,var(--b) 0 66%,var(--c) 0);color:#fff;font:800 15px var(--display)}
+.phone-head small{display:block;color:var(--muted);font-size:12px}
+.ok-big{font:800 22px var(--display);color:var(--ok)}
+@media (prefers-reduced-motion:no-preference){.modal-bg.open .phone{animation:up .18s ease-out}@keyframes up{from{transform:translateY(12px);opacity:.6}to{transform:none;opacity:1}}}
+.solobtn{margin-left:8px}
+.realnote{font-size:12.5px;color:var(--muted);margin:2px 0 8px;line-height:1.4}
+.solobar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:6px 0 10px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--b) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--b) 35%,var(--line));font-size:13.5px}
+.solobar[hidden]{display:none!important}
+body.solo-fijo .solobar{display:none!important}
+.btn.wa{background:#1f8f4e;border-color:#1f8f4e;color:#fff}
+.vencido{position:fixed;inset:0;z-index:50;background:rgba(15,17,22,.72);display:grid;place-items:center;padding:20px}
+.vencido .vbox{background:var(--surface);border-radius:16px;padding:24px;max-width:420px;display:flex;flex-direction:column;gap:12px;text-align:center}
+body.solo nav.tabs,body.solo .realnote,body.solo .solobtn,body.solo #app .intro{display:none!important}
+@media (max-width:600px){.solobtn{margin-left:0}}
+
+.payhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:2px}
+.paygrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.paygrid .btn{background:var(--surface);border:2px solid var(--m,var(--a));color:var(--ink);font-weight:700;min-height:46px;justify-content:center}
+.paygrid .btn:not([disabled]):hover{background:var(--m,var(--a));color:var(--on-accent)}
+@media (max-width:520px){.paygrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+details.alink{border-top:1px dashed var(--line);padding-top:12px}
+details.alink summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+details.alink[open]>*+*{margin-top:10px}details.alink .btn.big{width:100%}
+.cajal{list-style:none;margin:0;padding:0}
+.cajal li{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:center}
+.cajal li:last-child{border-bottom:0}
+.empty.hint{text-align:left;padding:18px 6px}
+#a-cart>.card+.card{margin-top:14px}
+</style>
+
+
+
+
+
+
+
+
+<!--skin-->
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{background-color:var(--bg);background-attachment:fixed}
+.genbar{max-width:1200px;margin:12px auto 0;padding:0 16px}
+.genbar>div{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:var(--r);background:color-mix(in srgb,var(--a) 9%,var(--surface));border:1.5px dashed color-mix(in srgb,var(--a) 45%,var(--line));font-size:13px;line-height:1.4;color:var(--ink)}
+.genbar svg{flex:none;color:var(--a)}
+@media print{.genbar{display:none}}
+@media (max-width:640px){.genbar>div{font-size:12px;padding:8px 10px}}
+:root{--bg:#f6f2ea!important;--surface:#fffdf9!important;--surface-2:#efe8dc!important;--ink:#22201c!important;--muted:#695f55!important;--line:#e3d9c8!important;--a:#c2410c!important;--b:#0f766e!important;--c:#1d4ed8!important;--on-accent:#ffffff!important;--r:14px!important;--display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif!important;--body:"Figtree",system-ui,sans-serif!important;color-scheme:light!important;}
+body{background-image:repeating-linear-gradient(118deg,rgba(194,65,12,.035) 0 46px,transparent 46px 150px),repeating-linear-gradient(118deg,rgba(15,118,110,.03) 70px 100px,transparent 100px 220px)}
+header.top{background:#fffdf9;border-bottom:1px solid var(--line)}
+header.top::before{content:"";display:block;height:9px;background:linear-gradient(90deg,#c2410c 0 12.5%,#f59e0b 0 25%,#facc15 0 37.5%,#65a30d 0 50%,#0f766e 0 62.5%,#1d4ed8 0 75%,#7c3aed 0 87.5%,#db2777 0)}
+.brand h1{font-size:23px;letter-spacing:-.02em}
+.chipset{gap:4px}.chipset i{width:14px;height:34px;border-radius:4px 4px 7px 7px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.12)}
+.card{border-radius:16px;box-shadow:0 1px 0 var(--line),0 8px 22px rgba(70,45,20,.06)}
+.intro{border:0;border-radius:18px;background:linear-gradient(100deg,color-mix(in srgb,var(--m,var(--a)) 16%,var(--surface)) 0 38%,var(--surface) 70%);box-shadow:0 1px 0 var(--line)}
+.mb{border-radius:50%;box-shadow:0 0 0 3px var(--surface),0 0 0 5px color-mix(in srgb,var(--m,var(--a)) 40%,transparent)}
+.btn{border-radius:12px}.btn.primary{box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.tab[aria-selected="true"]{border-bottom-width:4px}
+.kpi{border-radius:16px}
+
+.tapp{display:block;font:700 12px/1.1 var(--body);letter-spacing:.06em;margin:0 0 3px;text-transform:none}
+.tapp i{font-style:normal;opacity:.78}
+.tapp b{font-weight:800;color:var(--a)}
+@media print{.tapp{display:none}}
+.tabwrap{position:relative;min-width:0}
+.tabmore{position:absolute;top:0;bottom:3px;width:46px;display:flex;align-items:center;border:0;padding:0;margin:0;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s;z-index:3;color:var(--tabfg,currentColor);font:inherit}
+.tabmore-r{right:0;justify-content:flex-end;background:linear-gradient(90deg,rgba(255,255,255,0),var(--tabbg,#fff) 55%)}
+.tabmore-l{left:0;justify-content:flex-start;background:linear-gradient(270deg,rgba(255,255,255,0),var(--tabbg,#fff) 55%)}
+.tabwrap.can-r .tabmore-r,.tabwrap.can-l .tabmore-l{opacity:1;pointer-events:auto}
+.tabmore i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--tabbg,#fff);border:1.5px solid currentColor;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.tabmore svg{width:16px;height:16px}
+.tabmore:focus-visible i{outline:2px solid currentColor;outline-offset:2px}
+@keyframes tabnudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.tabwrap.can-r .tabmore-r i{animation:tabnudge 1.1s ease-in-out .6s 3}
+@media (prefers-reduced-motion:reduce){.tabwrap.can-r .tabmore-r i{animation:none}.tabmore{transition:none}}
+@media print{.tabmore{display:none}}
+
+.hero-r{max-width:1200px;margin:14px auto 0;padding:0 16px}
+.hero-in{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:center;gap:20px;border-radius:calc(var(--r) + 6px);overflow:hidden;padding:22px 26px;min-height:210px}
+.hero-txt{position:relative;z-index:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.hero-kick{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.hero-h{font-size:36px;line-height:1.02;margin:0}
+.hero-p{margin:0;font-size:15.5px;line-height:1.45;max-width:48ch}
+.hero-badges{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.hero-badges li{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:999px}
+.hero-note{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.4;margin:6px 0 0}
+.hero-note svg{flex:none;width:18px;height:18px}
+.hero-art{position:relative;align-self:stretch;display:flex;align-items:center}
+.hero-art svg{width:100%;height:auto;display:block}
+body.solo .hero-r,body.socio-mode .hero-r{display:none}
+@media (max-width:760px){.hero-in{grid-template-columns:1fr;padding:0 16px 16px;gap:10px}.hero-art{order:-1;margin:0 -16px}.hero-art svg{height:150px}.hero-h{font-size:27px}.hero-p{font-size:14.5px}}
+@media print{.hero-r{display:none}}
+
+.hero-in{background:#fffdf9;border:1px solid var(--line);box-shadow:0 8px 26px rgba(70,45,20,.08)}
+.hero-kick{color:#c2410c}.hero-h{font-family:var(--display);font-weight:800;font-size:40px;letter-spacing:-.025em;color:#22201c}
+.hero-h u{text-decoration:none;background:linear-gradient(transparent 62%,rgba(250,204,21,.65) 62% 92%,transparent 92%)}
+.hero-p{color:#5f574d}.hero-badges li{background:#22201c;color:#fffdf9}.hero-badges svg{color:#facc15}
+.hero-note{color:#6a6258}.hero-note svg{color:#c2410c}
+.hero-art{margin:0 -26px 0 0}.hero-art svg{height:auto}
+.hero-h u{white-space:nowrap}
+.intro{background-image:var(--stroke)!important;background-repeat:no-repeat!important;background-size:100% 100%!important;background-color:var(--surface)!important}
+.card{background-image:linear-gradient(90deg,#c2410c 0 14%,#f59e0b 0 28%,#facc15 0 42%,#65a30d 0 56%,#0f766e 0 70%,#1d4ed8 0 84%,#7c3aed 0);background-size:100% 5px;background-repeat:no-repeat;background-position:top}
+.kpi{background-image:none}
+.btn.primary{border-radius:999px}
+.tab .k{border-radius:5px 5px 9px 9px}
+@media (max-width:760px){.hero-art{margin:0 -16px}.hero-art svg{min-height:0}.hero-h{font-size:30px}}
+body{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Cg fill='none' stroke='rgba(34,32,28,.075)' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(70 74)'%3E%3Cpath d='M-24 -8v44a24 7 0 0 0 48 0v-44'/%3E%3Cellipse cy='-8' rx='24' ry='7'/%3E%3Cpath d='M-18 -14q18 -22 36 0'/%3E%3Cpath d='M10 -2c0 8-1 12-3 15c-2-4-3-9-2-15'/%3E%3C/g%3E%3Cg transform='translate(268 76) rotate(-18)'%3E%3Crect x='-30' y='-12' width='60' height='24' rx='8'/%3E%3Cpath d='M30 0h14v-30h-40v-10'/%3E%3Cpath d='M4 -40v-26'/%3E%3C/g%3E%3Cg transform='translate(118 214) rotate(28)'%3E%3Crect x='-5' y='-50' width='10' height='44' rx='4'/%3E%3Crect x='-9' y='-6' width='18' height='12' rx='2'/%3E%3Cpath d='M-9 6c0 18 4 26 9 30c5-4 9-12 9-30'/%3E%3C/g%3E%3Cg transform='translate(300 230)'%3E%3Cg transform='rotate(-30)'%3E%3Crect x='-9' y='-60' width='18' height='54' rx='3'/%3E%3C/g%3E%3Cg transform='rotate(0)'%3E%3Crect x='-9' y='-60' width='18' height='54' rx='3'/%3E%3C/g%3E%3Cg transform='rotate(30)'%3E%3Crect x='-9' y='-60' width='18' height='54' rx='3'/%3E%3C/g%3E%3Ccircle r='5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");background-size:400px 300px}:root{--stroke:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='120' viewBox='0 0 600 120' preserveAspectRatio='none'%3E%3Cpath d='M0 30 C60 18 120 40 200 26 C280 12 360 36 440 22 C510 10 560 26 600 18 L600 96 C540 108 480 88 400 100 C320 112 240 90 160 104 C90 116 40 98 0 106Z' fill='rgba(194,65,12,.13)'/%3E%3C/svg%3E");}</style>
+<!--/skin-->
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <span class="chipset" aria-hidden="true"><i style="background:var(--a)"></i><i style="background:var(--b)"></i><i style="background:var(--c)"></i></span>
+      <div><!--tapp--><span class="tapp"><i>Tecnologiz</i><b>App</b></span><!--/tapp--><h1 id="brandname">Demo Pinturería</h1><span class="sub">Tecnologizá tu comercio · 3 formas de vender con la misma lista de precios</span></div>
+      <span class="flag">Precios de ejemplo · pagos simulados</span><button type="button" class="btn sm solobtn" data-act="solo">Ver lo que ve el cliente</button>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Vistas"></nav><p class="realnote" id="realnote">Demo: acá ves las 4 partes juntas para conocerlas. En la versión real cada uno tiene su propio acceso: el cliente recibe un link con <b>solo su sección</b>, el vendedor usa la app en el mostrador y el panel del dueño va con clave.</p><div class="solobar" id="solobar" hidden><span><b>Así lo ve tu cliente.</b> Es una app aparte, solo con su sección: no ve el vendedor, ni el panel, ni los precios de compra.</span><button type="button" class="btn sm" data-act="solo">Volver al demo completo</button></div>
+  </div>
+</header>
+<!--genbar--><section class="hero-r" aria-label="Presentación"><div class="hero-in"><div class="hero-txt"><span class="hero-kick">Pinturerías</span><h2 class="hero-h">Vendé más con <u>la misma lista</u> de precios</h2><p class="hero-p">Presupuestos al instante, pedidos por WhatsApp y cobro con Mercado Pago. Tu cliente paga desde su casa y solo pasa a retirar.</p><ul class="hero-badges"><li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>En la compu</li><li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>En el celular, como app</li><li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>Se abre con un link</li></ul><p class="hero-note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1-.1-2.2 1.1-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg><span>Diseño de muestra: este estilo es genérico para el rubro. En tu app completa lo personalizamos con <b>tu logo, tus colores y un diseño acorde a tu marca</b>.</span></p></div><div class="hero-art" aria-hidden="true"><svg viewBox="0 0 560 250" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<path d="M-10 132 C40 118 90 140 150 126 C200 114 250 136 300 124 L304 176 C252 188 204 166 152 178 C94 192 44 170 -10 182Z" fill="#c2410c"/>
+<path d="M40 176 c0 10 -2 18 -6 22 c-5 -6 -6 -14 -4 -22z M120 182 c0 14 -3 24 -8 28 c-6 -8 -6 -18 -3 -28z M226 176 c0 9 -2 15 -5 19 c-4 -5 -5 -12 -3 -19z" fill="#c2410c"/>
+<g opacity=".25" fill="#fff"><path d="M0 140 C60 130 120 146 200 134 L200 138 C120 150 60 134 0 144Z"/><path d="M20 162 C90 152 150 168 260 154 L260 157 C150 172 90 156 20 166Z"/></g>
+<g transform="translate(296 150) rotate(-4)"><path d="M16 -36 V-54 H60 L76 -82" fill="none" stroke="#3a3836" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><path d="M78 -86 L98 -120" stroke="#2b2a28" stroke-width="15" stroke-linecap="round"/>
+<rect x="0" y="-36" width="32" height="72" rx="9" fill="#e86a2c"/><rect x="0" y="-36" width="32" height="72" rx="9" fill="none" stroke="#7c2d12" stroke-width="2"/><g stroke="#f6c39f" stroke-width="2" opacity=".7"><path d="M8 -28v56M16 -28v56M24 -28v56"/></g></g>
+<g transform="translate(470 210)">
+<g transform="rotate(-62)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#db2777"/></g>
+<g transform="rotate(-44)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#7c3aed"/></g>
+<g transform="rotate(-26)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#1d4ed8"/></g>
+<g transform="rotate(-8)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#0f766e"/></g>
+<g transform="rotate(10)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#65a30d"/></g>
+<g transform="rotate(28)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#facc15"/></g>
+<g transform="rotate(46)"><rect x="-13" y="-150" width="26" height="140" rx="5" fill="#f59e0b"/></g>
+<g fill="#fff" opacity=".85"><g transform="rotate(-62)"><rect x="-9" y="-146" width="18" height="6" rx="2"/></g><g transform="rotate(-26)"><rect x="-9" y="-146" width="18" height="6" rx="2"/></g><g transform="rotate(10)"><rect x="-9" y="-146" width="18" height="6" rx="2"/></g><g transform="rotate(46)"><rect x="-9" y="-146" width="18" height="6" rx="2"/></g></g>
+<circle r="10" fill="#2b2a28"/><circle r="4" fill="#e3d9c8"/></g>
+<g transform="translate(70 70)"><path d="M-30 -10 v58 a30 9 0 0 0 60 0 v-58" fill="#e3d9c8"/><ellipse cx="0" cy="-10" rx="30" ry="9" fill="#cfc3ae"/><rect x="-30" y="8" width="60" height="22" fill="#0f766e"/><path d="M-30 -10 a30 9 0 0 0 60 0" fill="none" stroke="#0f766e" stroke-width="5"/><path d="M14 -4 c0 10 -1 16 -4 20 c-3 -5 -4 -12 -2 -19z" fill="#0f766e"/><path d="M-22 -16 Q0 -44 22 -16" fill="none" stroke="#2b2a28" stroke-width="3"/></g>
+</svg></div></div></section><!--/genbar-->
+<main id="app"></main>
+<div class="modal-bg" id="modal" role="dialog" aria-modal="true" aria-label="Vista del cliente"><div id="modal-body"></div></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- utilidades ---------- */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>'$ '+Math.round(n).toLocaleString('es-AR');
+const fmtNum=n=>Number(n).toLocaleString('es-AR',{maximumFractionDigits:2});
+const r100=n=>Math.round(n/100)*100;
+const r1=n=>Math.round(n*10)/10;
+const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)&&x>0?x:0;};
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const pad=n=>String(n).padStart(4,'0');
+const mmss=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+const ago=t=>{const m=Math.round((Date.now()-t)/60000);if(m<1)return 'recién';if(m<60)return 'hace '+m+' min';return 'hace '+Math.round(m/60)+' h';};
+const pct=x=>Math.round(x*100)+'%';
+
+/* ===== CONFIGURACIÓN DE LA PRUEBA (lo único que hay que tocar) =====
+   PRUEBA_HASTA: fecha y hora en que vence la prueba. Vacío = sin vencimiento. Ejemplo: '2026-11-03T20:00'
+   CONTACTO_WA: tu WhatsApp para que te escriban cuando vence. */
+const PRUEBA_HASTA='';
+const CONTACTO_WA='';
+const CONTACTO_NOMBRE='Sebastián · Tecnologizá tu comercio';
+/* ================================================================== */
+const STORE={name:'Pinturería Demo',addr:'Av. Ejemplo 1234',hours:'Lun a Sáb de 8 a 18 h',wa:'11 5555 1234',web:'pintureria-demo.github.io'};
+const GREMIO=0.12;
+
+/* ---------- catálogo ---------- */
+const P=[],byId={};
+function add(o){P.push(o);byId[o.id]=o;}
+const TIERS={eco:'Línea Económica',med:'Línea Estándar',pre:'Línea Premium'};
+const FAM=[
+ {fam:'lat-int',cat:'Látex',name:'Látex interior mate',unit:'L',sizes:[20,10,4,1],f:{20:1,10:.54,4:.24,1:.072},base:{eco:112000,med:168000,pre:236000},rend:{eco:8,med:10,pre:12}},
+ {fam:'lat-ext',cat:'Látex',name:'Látex exterior',unit:'L',sizes:[20,10,4,1],f:{20:1,10:.54,4:.24,1:.072},base:{eco:128000,med:192000,pre:268000},rend:{eco:7,med:9,pre:11}},
+ {fam:'cielo',cat:'Látex',name:'Látex cielorraso antihongos',unit:'L',sizes:[20,10,4],f:{20:1,10:.54,4:.24},base:{eco:98000,med:146000,pre:205000},rend:{eco:8,med:10,pre:12}},
+ {fam:'esm',cat:'Esmaltes y madera',name:'Esmalte sintético brillante',unit:'L',sizes:[4,1,0.5],f:{4:1,1:.29,0.5:.16},base:{eco:62000,med:88000,pre:118000},rend:{eco:10,med:12,pre:14}},
+ {fam:'mad',cat:'Esmaltes y madera',name:'Protector para madera',unit:'L',sizes:[4,1],f:{4:1,1:.29},base:{eco:58000,med:82000,pre:112000},rend:{eco:10,med:12,pre:14}},
+ {fam:'memb',cat:'Techos',name:'Membrana líquida',unit:'kg',sizes:[20,10,4],f:{20:1,10:.55,4:.25},base:{eco:96000,med:138000,pre:189000},rend:{eco:2.6,med:3,pre:3.4}}
+];
+const famById=Object.fromEntries(FAM.map(f=>[f.fam,f]));
+FAM.forEach(F=>['eco','med','pre'].forEach(t=>F.sizes.forEach(s=>add({id:`${F.fam}-${t}-${s}`,cat:F.cat,group:'pintura',fam:F.fam,tier:t,size:s,unit:F.unit,name:`${F.name} · ${TIERS[t]}`,pres:`${fmtNum(s)} ${F.unit}`,price:r100(F.base[t]*F.f[s])}))));
+[
+ ['fij',[[4,26500],[10,58000],[20,104000]],'Fijador sellador al agua','L'],
+ ['end',[[1,6800],[4,19500],[10,41000]],'Enduido plástico interior','kg'],
+ ['conv',[[1,19800],[4,64000]],'Convertidor de óxido','L'],
+ ['aguar',[[1,5900],[5,24000]],'Aguarrás','L'],
+ ['thin',[[1,6900]],'Thinner','L']
+].forEach(([fam,sz,name,unit])=>sz.forEach(([s,pr])=>add({id:`${fam}-${s}`,cat:'Complementos',group:'comp',fam,size:s,unit,name,pres:`${fmtNum(s)} ${unit}`,price:pr})));
+[
+ ['rod-lana','Rodillo de lana 22 cm',12400],['rod-anti','Rodillo antigota 22 cm',15200],['rod-esp','Rodillo de espuma 10 cm',4300],
+ ['pin-1','Pincel de cerda 1"',3100],['pin-2','Pincel de cerda 2"',5200],['pin-3','Pincel de cerda 3"',7600],['pinceleta','Pinceleta 4"',9800],
+ ['bandeja','Bandeja para rodillo',5800],['cinta-24','Cinta de papel 24 mm',2600],['cinta-36','Cinta de papel 36 mm',3600],
+ ['lija-120','Lija al agua grano 120',1100],['lija-220','Lija al agua grano 220',1100],['lija-80','Lija para madera grano 80',900],
+ ['esp-6','Espátula 6 cm',3900],['esp-10','Espátula 10 cm',5400],['nylon','Nylon cobertor 4 × 5 m',3400],
+ ['ext','Extensión telescópica 2 m',18900],['cepillo','Cepillo de alambre',4700],['guantes','Guantes de nitrilo (par)',2200]
+].forEach(([id,name,pr])=>add({id,cat:'Herramientas',group:'acc',name,pres:'unidad',price:pr}));
+[
+ ['barniz-m-1','Esmaltes y madera','pintura','Barniz marino brillante','1 L',24500],
+ ['barniz-m-4','Esmaltes y madera','pintura','Barniz marino brillante','4 L',86000],
+ ['barniz-a-1','Esmaltes y madera','pintura','Barniz al agua satinado','1 L',21000],
+ ['masilla-mad','Ferretería y varios','comp','Masilla para madera','250 g',5600],
+ ['aisl-10','Ferretería y varios','acc','Cinta aisladora','10 m',1500],
+ ['aisl-20','Ferretería y varios','acc','Cinta aisladora','20 m',2400],
+ ['teflon','Ferretería y varios','acc','Cinta de teflón','10 m',900],
+ ['sopapa','Ferretería y varios','acc','Sopapa para inodoro (fuelle)','unidad',6900],
+ ['silicona','Ferretería y varios','acc','Sellador de silicona transparente','280 ml',7800],
+ ['pegamento','Ferretería y varios','acc','Pegamento de contacto','250 ml',8900]
+].forEach(([id,cat,group,name,pres,price])=>add({id,cat,group,name,pres,price}));
+const CATS=['Todos',...new Set(P.map(p=>p.cat))];
+
+/* mejor combinación de envases para cubrir "need" al menor precio */
+function combo(fam,tier,need){
+  if(need<=0)return [];
+  const c=P.filter(p=>p.fam===fam&&(tier==null||p.tier===tier)).sort((a,b)=>b.size-a.size);
+  let best=null;const pick=[];
+  (function rec(i,vol,cost){
+    if(vol>=need-1e-9){const left=vol-need;if(!best||cost<best.cost-0.5||(Math.abs(cost-best.cost)<=0.5&&left<best.left))best={cost,left,pick:pick.slice()};return;}
+    if(i>=c.length)return;
+    const it=c[i],maxN=Math.ceil((need-vol)/it.size-1e-9),from=i===c.length-1?maxN:0;
+    for(let n=maxN;n>=from;n--){pick.push([it,n]);rec(i+1,vol+n*it.size,cost+n*it.price);pick.pop();}
+  })(0,0,0);
+  return best?best.pick.filter(x=>x[1]>0):[];
+}
+
+/* recetas del cotizador guiado (B) */
+const RECIPES=[
+ {key:'int',label:'Paredes interiores',hint:'Living, dormitorios, pasillos',fam:'lat-int',manos:2,medida:'ambiente',
+  extras:[{key:'fij',label:'Pared nueva o muy absorbente',hint:'Suma fijador sellador (1 mano)',def:false},{key:'end',label:'Tiene grietas o imperfecciones',hint:'Suma enduido y espátula',def:false}],
+  acc:(a,x)=>[['rod-lana',1],['bandeja',1],['pin-2',1],['cinta-36',Math.max(1,Math.ceil(a/40))],['lija-120',2],['nylon',Math.max(1,Math.ceil(a/50))]].concat(x.end?[['esp-10',1]]:[])},
+ {key:'ext',label:'Paredes exteriores',hint:'Frentes, medianeras, patios',fam:'lat-ext',manos:2,medida:'m2',
+  extras:[{key:'fij',label:'Es la primera vez que se pinta',hint:'Suma fijador sellador (1 mano)',def:true}],
+  acc:a=>[['rod-lana',1],['bandeja',1],['pin-3',1],['cinta-36',Math.max(1,Math.ceil(a/50))],['ext',1]]},
+ {key:'cielo',label:'Cielorrasos',hint:'Techos de ambientes, baños, cocinas',fam:'cielo',manos:2,medida:'piso',
+  extras:[{key:'fij',label:'Techo nuevo o con manchas',hint:'Suma fijador sellador (1 mano)',def:false}],
+  acc:a=>[['rod-anti',1],['ext',1],['bandeja',1],['nylon',Math.max(1,Math.ceil(a/20))],['cinta-24',1]]},
+ {key:'rejas',label:'Rejas y metal',hint:'Rejas, portones, barandas',fam:'esm',manos:2,medida:'m2',
+  extras:[{key:'conv',label:'Tiene óxido',hint:'Suma convertidor y cepillo de alambre',def:true}],
+  acc:(a,x)=>[['pin-1',1],['rod-esp',1],['lija-220',2],['aguar-1',1],['guantes',1]].concat(x.conv?[['cepillo',1]]:[])},
+ {key:'madera',label:'Madera',hint:'Puertas, decks, muebles de jardín',fam:'mad',manos:3,medida:'m2',extras:[],
+  acc:a=>[['pin-2',1],['lija-80',Math.max(2,Math.ceil(a/5))],['aguar-1',1],['guantes',1]]},
+ {key:'techo',label:'Techos y terrazas',hint:'Membrana líquida impermeable',fam:'memb',manos:3,medida:'m2',extras:[],
+  acc:a=>[['pinceleta',1],['rod-lana',1],['cepillo',1]]},
+ {key:'none',label:'Solo productos sueltos',hint:'Busco lo que necesito, sin calcular',fam:null,manos:0,medida:'none',extras:[],acc:()=>[]}
+];
+const recBy=k=>RECIPES.find(r=>r.key===k);
+
+/* ---------- estado ---------- */
+const LAST_C={'lat-int-med-20':2,'fij-10':1,'rod-lana':2,'cinta-36':3,'lija-120':4};
+function freshA(){return {items:{},desc:'0',cliente:'',tel:'',q:'',cat:'Todos',start:Date.now(),sent:null,vendida:null,linkOpen:false};}
+const PAGOS=['Efectivo','Débito','Crédito','Transferencia','Mercado Pago'];
+function freshB(){return {rec:'none',tier:'med',m:{largo:'4',ancho:'3,5',alto:'2,6',puertas:'1',ventanas:'1',m2:'30'},extras:{},qty:{},removed:{},extra:{},q:'',cliente:'',tel:'',sent:null};}
+const S={
+  view:'vendedor',
+  A:freshA(),
+  B:freshB(),
+  C:{items:{},q:'',cat:'Todos',m2:'60',mo:'9500',cliente:'Familia Gómez',tel:'',presu:false},
+  O:{q:'',open:{}},
+  pedidos:[],next:7,priceUpdated:null
+};
+function initExtras(){S.B.extras={};recBy(S.B.rec).extras.forEach(e=>S.B.extras[e.key]=e.def);}
+initExtras();
+
+function lineItems(map){return Object.entries(map).filter(([id,q])=>q>0&&byId[id]).map(([id,q])=>({p:byId[id],q}));}
+function sumLines(lines,factor){return lines.reduce((s,l)=>s+r100(l.p.price*(factor||1))*l.q,0);}
+function crearPedido(mode,map,o){
+  const factor=o.factor||1;
+  const items=lineItems(map).map(l=>({pid:l.p.id,q:l.q,price:r100(l.p.price*factor)}));
+  const p={id:S.next++,mode,cliente:(o.cliente||'').trim()||'Cliente sin nombre',tel:o.tel||'',items,estado:o.estado,t:o.t||Date.now(),armado:o.armado??null,online:!!o.online};
+  S.pedidos.unshift(p);save();return p;
+}
+const pedTotal=p=>p.items.reduce((s,i)=>s+i.price*i.q,0);
+const pedAcc=p=>{const t=pedTotal(p);if(!t)return 0;return p.items.filter(i=>byId[i.pid]&&byId[i.pid].group!=='pintura').reduce((s,i)=>s+i.price*i.q,0)/t;};
+
+/* pedidos de ejemplo */
+function seed(){
+  const m=x=>Date.now()-x*60000;
+  S.next=4;S.pedidos=[];
+  [[{'lat-int-eco-4':1,'rod-lana':1},'Débito',m(230)],[{'esm-med-1':1,'aguar-1':1,'pin-1':1},'Efectivo',m(200)],[{'cinta-36':2,'lija-120':4},'Mercado Pago',m(170)]].forEach(([it,pg,t],ix)=>{const p=crearPedido('A',Object.fromEntries(Object.entries(it).filter(([k])=>byId[k])),{cliente:'Venta en el mostrador',estado:'entregado',armado:35,t});p.pago=pg;p.mostrador=true;const d0=new Date();d0.setHours(0,0,0,0);if(p.t<d0.getTime())p.t=Math.min(Date.now()-60000*(3-ix),d0.getTime()+60000*(6+ix*11));});
+  crearPedido('A',{'lat-int-med-10':1,'rod-lana':1,'bandeja':1},{cliente:'Marta G.',tel:'11 5555 0101',estado:'entregado',online:true,armado:95,t:m(190)});
+  crearPedido('B',{'lat-ext-pre-20':1,'lat-ext-pre-4':1,'fij-10':1,'rod-lana':1,'bandeja':1,'pin-3':1,'cinta-36':2,'ext':1},{cliente:'Lucas P.',tel:'11 5555 0102',estado:'pagado',online:true,t:m(150)});
+  crearPedido('C',{'lat-int-med-20':3,'fij-20':1,'cinta-36':4,'lija-120':6},{cliente:'Hugo Ramírez (pintor)',estado:'preparando',online:true,factor:1-GREMIO,t:m(120)});
+  crearPedido('A',{'esm-med-1':2,'conv-1':1,'pin-1':1,'aguar-1':1},{cliente:'Jorge S.',tel:'11 5555 0104',estado:'esperando',armado:70,t:m(60)});
+  crearPedido('B',{'cielo-med-10':1,'rod-anti':1,'ext':1,'bandeja':1,'nylon':2,'cinta-24':1},{cliente:'Ana V.',tel:'11 5555 0105',estado:'confirmar',t:m(30)});
+  crearPedido('C',{'memb-pre-20':2,'pinceleta':1},{cliente:'Diego F. (pintor)',tel:'11 5555 0106',estado:'listo',online:true,factor:1-GREMIO,t:m(15)});
+}
+const KEY='demo-pintureria-v2';
+function save(){try{localStorage.setItem(KEY,JSON.stringify({pedidos:S.pedidos,next:S.next,priceUpdated:S.priceUpdated,prices:Object.fromEntries(P.map(p=>[p.id,p.price]))}));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(!d||!Array.isArray(d.pedidos))return false;S.pedidos=d.pedidos;S.next=d.next;S.priceUpdated=d.priceUpdated;if(d.prices)Object.entries(d.prices).forEach(([id,pr])=>{if(byId[id])byId[id].price=pr;});return true;}catch(e){return false;}}
+if(!load())seed();
+
+/* ---------- vistas ---------- */
+const MODES={
+  A:{view:'vendedor',tab:'Vendedor',color:'var(--a)',title:'A · El vendedor, en el mostrador',intro:'Busca por nombre lo que lleva el cliente, lo agrega y toca cómo pagó: efectivo, débito o crédito con el posnet, transferencia o Mercado Pago. La venta queda registrada sola para el control del dueño. Si el cliente no está en el local, le manda el link de pago por WhatsApp.'},
+  B:{view:'cliente',tab:'Cliente',color:'var(--b)',title:'B · El cliente se arma el pedido solo',intro:'El cliente responde qué va a pintar, las medidas y la calidad. La app calcula las latas y suma los accesorios. Con el buscador puede agregar cualquier otro producto del local, y después paga y pasa a retirar. Funciona con el local cerrado.'},
+  C:{view:'pintor',tab:'Pintor',color:'var(--c)',title:'C · El pintor compra con precio de gremio',intro:'El pintor busca en el catálogo completo con su descuento y arma el presupuesto para su propio cliente con los materiales de este local. Cada obra suya termina comprando acá.'}
+};
+const VIEWS=['vendedor','cliente','pintor','duenio'];
+const E={
+  esperando:{label:'Link enviado · sin pagar',cls:'warn'},
+  confirmar:{label:'Por WhatsApp · a confirmar',cls:'act'},
+  pagado:{label:'Pagado · a preparar',cls:'act'},
+  preparando:{label:'Preparando',cls:'prog'},
+  listo:{label:'Listo para retirar',cls:'ok'},
+  entregado:{label:'Entregado',cls:'done'}
+};
+const FLOW={pagado:['preparando','Empezar a preparar'],preparando:['listo','Marcar listo'],listo:['entregado','Marcar entregado']};
+
+function tabs(){
+  const pend=S.pedidos.filter(p=>p.estado==='pagado'||p.estado==='confirmar').length;
+  const t=[['A','vendedor'],['B','cliente'],['C','pintor']].map(([m,v])=>`<button class="tab" role="tab" aria-selected="${S.view===v}" style="--tc:${MODES[m].color}" data-act="tab" data-v="${v}"><span class="k">${m}</span>${MODES[m].tab}</button>`).join('')
+   +`<button class="tab" role="tab" aria-selected="${S.view==='duenio'}" style="--tc:var(--ink)" data-act="tab" data-v="duenio">Panel del dueño${pend?` <span class="cnt" aria-label="${pend} pedidos para atender">${pend}</span>`:''}</button>`;
+  document.getElementById('tabs').innerHTML=t;
+}
+function intro(m){return `<div class="intro"><span class="mb">${m}</span><div><h2>${MODES[m].title}</h2><p>${MODES[m].intro}</p></div></div>`;}
+
+function stepper(mode,pid,q){return `<div class="qty" role="group" aria-label="Cantidad"><button data-act="dec" data-mode="${mode}" data-pid="${pid}" aria-label="Uno menos">−</button><span>${fmtNum(q)}</span><button data-act="inc" data-mode="${mode}" data-pid="${pid}" aria-label="Uno más">+</button></div>`;}
+function rendTxt(p){const F=famById[p.fam];return F&&p.tier?` · rinde ${fmtNum(F.rend[p.tier])} m²/${F.unit} por mano`:'';}
+
+/* catálogo (A y C) */
+function filtered(mode){const st=S[mode];const w=norm(st.q).split(/\s+/).filter(Boolean);return P.filter(p=>(st.cat==='Todos'||p.cat===st.cat)&&w.every(x=>norm(p.name+' '+p.pres+' '+p.cat).includes(x)));}
+function prodRow(p,mode){
+  const st=S[mode],q=st.items[p.id]||0,g=mode==='C',price=g?r100(p.price*(1-GREMIO)):p.price;
+  return `<li class="prow"><div><span class="pname">${esc(p.name)}</span><span class="ppres">${esc(p.pres)}${rendTxt(p)}</span></div><div class="pprice">${g?`<s>${fmt(p.price)}</s>`:''}<b>${fmt(price)}</b></div>${q?stepper(mode,p.id,q):`<button class="btn add sm" data-act="add" data-mode="${mode}" data-pid="${p.id}" aria-label="Agregar ${esc(p.name)} ${esc(p.pres)}">Agregar</button>`}</li>`;
+}
+const buscando=mode=>!!norm(S[mode].q).trim()||S[mode].cat!=='Todos';
+function countTxt(mode){return buscando(mode)?filtered(mode).length+' de '+P.length+' productos':P.length+' productos cargados';}
+function listHTML(mode){if(!buscando(mode))return `<li class="empty hint">Escribí el nombre del producto, por ejemplo “látex 20”, “rodillo” o “lija”, o elegí un rubro.</li>`;const l=filtered(mode);return l.length?l.map(p=>prodRow(p,mode)).join(''):`<li class="empty">No hay productos con “${esc(S[mode].q)}”. Probá con otra palabra, por ejemplo “látex” o “rodillo”.</li>`;}
+function catalogHTML(mode){
+  const st=S[mode],n=filtered(mode).length;
+  return `<div class="card"><div class="cardhead"><h2>${mode==='C'?'Catálogo con precio de gremio':'Buscá lo que lleva'}</h2><span class="muted small" id="count-${mode}">${countTxt(mode)}</span></div>
+  <label class="sr" for="q-${mode}">Buscar producto</label>
+  <input class="in" id="q-${mode}" type="search" data-bind="${mode}.q" placeholder="Buscar: látex 20, rodillo, lija…" value="${esc(st.q)}" autocomplete="off">
+  <div class="chips">${CATS.map(c=>`<button class="chip" aria-pressed="${c===st.cat}" data-act="cat" data-mode="${mode}" data-v="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+  <ul class="plist" id="plist-${mode}">${listHTML(mode)}</ul></div>`;
+}
+function renderList(mode){const ul=document.getElementById('plist-'+mode);if(ul)ul.innerHTML=listHTML(mode);const c=document.getElementById('count-'+mode);if(c)c.textContent=countTxt(mode);}
+function cartLine(l,mode,factor){const u=r100(l.p.price*(factor||1));return `<li class="line"><div><span class="pname">${esc(l.p.name)}</span><span class="ppres">${esc(l.p.pres)} · ${fmt(u)} c/u</span></div>${stepper(mode,l.p.id,l.q)}<span class="num">${fmt(u*l.q)}</span></li>`;}
+
+function msgPedido(p){
+  return `Hola ${p.cliente.split(' ')[0]}, te paso tu pedido de ${STORE.name}:\n`+p.items.map(i=>`• ${i.q} × ${byId[i.pid].name} ${byId[i.pid].pres}: ${fmt(i.price*i.q)}`).join('\n')+`\nTotal: ${fmt(pedTotal(p))}\n\nPagalo acá y pasá a retirar por ${STORE.addr}:\nhttps://${STORE.web}/p/${pad(p.id)}`;
+}
+function waLink(tel,text){const d=String(tel||'').replace(/\D/g,'');let n='';if(d.length>=10)n=d.startsWith('54')?d:'549'+d.replace(/^0/,'');return 'https://wa.me/'+n+'?text='+encodeURIComponent(text);}
+
+/* A */
+function timerTxt(){return Object.keys(S.A.items).length?'Armando: '+mmss((Date.now()-S.A.start)/1000):'Sin empezar';}
+function totalsA(){const l=lineItems(S.A.items),sub=sumLines(l),d=Math.min(100,num(S.A.desc)),dv=r100(sub*d/100);return `${d?`<div class="sumrow"><span>Subtotal</span><span class="num">${fmt(sub)}</span></div><div class="sumrow"><span>Descuento ${fmtNum(d)}%</span><span class="num">−${fmt(dv)}</span></div>`:''}<div class="tot"><span>Total</span><span>${fmt(sub-dv)}</span></div>`;}
+function cartAHTML(){
+  const st=S.A;
+  if(st.sent){const p=S.pedidos.find(x=>x.id===st.sent);if(p)return `<div class="card"><div class="done"><h2>Pedido #${pad(p.id)} listo para mandar</h2><p>Se generó el link de pago para ${esc(p.cliente)}. El pedido ya figura en el panel del dueño como “link enviado”.</p><p class="small muted">Armado en ${mmss(p.armado)} min.</p><div class="row"><a class="btn primary" href="${waLink(p.tel,msgPedido(p))}" target="_blank" rel="noopener">Abrir WhatsApp con el mensaje</a><button class="btn" data-act="preview" data-id="${p.id}">Ver cómo lo recibe el cliente</button></div><pre class="msg">${esc(msgPedido(p))}</pre><div class="row"><button class="btn sm" data-act="copy">Copiar mensaje</button><button class="btn sm" data-act="newA">Armar otro pedido</button></div></div></div>`;}
+  if(st.vendida){const p=S.pedidos.find(x=>x.id===st.vendida);if(p)return `<div class="card"><div class="done"><h2>Venta #${pad(p.id)} registrada</h2><p><b>${fmt(pedTotal(p))}</b> · ${esc(p.pago)} · ${p.items.reduce((s,i)=>s+i.q,0)} artículos. Ya figura en el panel del dueño y en la planilla de ventas.</p><div class="row"><button class="btn primary" data-act="newA">Nueva venta</button></div></div></div>${cajaHTML()}`;}
+  const l=lineItems(st.items);
+  return `<div class="card"><div class="cardhead"><h2>Venta en el mostrador</h2><span class="timer" id="a-timer">${timerTxt()}</span></div>
+  ${l.length?`<ul class="lines">${l.map(x=>cartLine(x,'A')).join('')}</ul>`:`<p class="empty">Buscá el producto por nombre y tocá Agregar.</p>`}
+  <div class="fields"><label class="f" for="a-desc">Descuento (%)<input class="in" id="a-desc" data-bind="A.desc" inputmode="decimal" value="${esc(st.desc)}"></label></div>
+  <div id="a-totals">${totalsA()}</div>
+  <div class="payhead"><b>Cobrado con</b><span class="small muted">Al tocar, la venta queda registrada.</span></div>
+  <div class="paygrid">${PAGOS.map(m=>`<button class="btn" data-act="vendA" data-v="${m}" ${l.length?'':'disabled'}>${m}</button>`).join('')}</div>
+  <details class="alink" ${st.linkOpen?'open':''}><summary>El cliente no está en el local: mandarle el link de pago</summary>
+  <div class="fields"><label class="f" for="a-cli">Cliente<input class="in" id="a-cli" data-bind="A.cliente" value="${esc(st.cliente)}" placeholder="Nombre"></label><label class="f" for="a-tel">WhatsApp<input class="in" id="a-tel" data-bind="A.tel" inputmode="tel" value="${esc(st.tel)}" placeholder="11 5555 0000"></label></div>
+  <button class="btn big" data-act="sendA" ${l.length?'':'disabled'}>Generar link de pago y mandar por WhatsApp</button></details></div>${cajaHTML()}`;
+}
+function cajaHTML(){
+  const d0=new Date();d0.setHours(0,0,0,0);
+  const L=S.pedidos.filter(p=>p.mostrador&&p.t>=d0.getTime()),tot=L.reduce((s,p)=>s+pedTotal(p),0),por={};
+  L.forEach(p=>por[p.pago]=(por[p.pago]||0)+pedTotal(p));
+  return `<div class="card caja"><div class="cardhead"><h2>Caja de hoy · mostrador</h2><span class="num"><b>${fmt(tot)}</b></span></div>
+  ${L.length?`<div class="chips">${PAGOS.filter(m=>por[m]).map(m=>`<span class="pill done">${m}: ${fmt(por[m])}</span>`).join('')}</div>
+  <ul class="cajal">${L.slice(0,6).map(p=>`<li><span class="num">${new Date(p.t).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false})}</span><span>#${pad(p.id)} · ${p.items.reduce((s,i)=>s+i.q,0)} art.</span><span class="muted">${esc(p.pago)}</span><b class="num">${fmt(pedTotal(p))}</b></li>`).join('')}</ul>`:'<p class="empty">Todavía no hay ventas hoy.</p>'}</div>`;
+}
+function viewA(){return `${intro('A')}<div class="grid"><div id="cat-A">${catalogHTML('A')}</div><div id="a-cart">${cartAHTML()}</div></div>`;}
+
+/* B */
+function areaB(){const r=recBy(S.B.rec),m=S.B.m;if(r.medida==='ambiente')return Math.max(0,2*(num(m.largo)+num(m.ancho))*num(m.alto)-num(m.puertas)*1.6-num(m.ventanas)*1.5);if(r.medida==='piso')return num(m.largo)*num(m.ancho);return num(m.m2);}
+function computeB(){
+  const r=recBy(S.B.rec),x=S.B.extras,map={},kind={};
+  let a=0,need=0,note='',F=null;
+  if(r.fam){
+  a=areaB();const t=S.B.tier;F=famById[r.fam];const rend=F.rend[t];need=a*r.manos/rend*1.1;
+  const lines=[];
+  if(a>0){
+    combo(r.fam,t,need).forEach(([p,n])=>lines.push([p.id,n,'pintura']));
+    note=`${fmtNum(r1(a))} m² × ${r.manos} manos ÷ ${fmtNum(rend)} m²/${F.unit} + 10% de margen = ${fmtNum(r1(need))} ${F.unit}`;
+    if(x.fij)combo('fij',null,a/10*1.1).forEach(([p,n])=>lines.push([p.id,n,'comp']));
+    if(x.end)combo('end',null,a*0.15).forEach(([p,n])=>lines.push([p.id,n,'comp']));
+    if(x.conv)combo('conv',null,a/10*1.1).forEach(([p,n])=>lines.push([p.id,n,'comp']));
+    r.acc(a,x).forEach(([id,n])=>lines.push([id,n,'acc']));
+  }
+  lines.forEach(([id,n,k])=>{map[id]=(map[id]||0)+n;kind[id]=k;});
+  Object.entries(S.B.qty).forEach(([id,q])=>{if(id in map)map[id]=q;});
+  Object.keys(S.B.removed).forEach(id=>delete map[id]);
+  }
+  Object.entries(S.B.extra).forEach(([id,q])=>{if(q>0&&byId[id]){map[id]=(map[id]||0)+q;if(!kind[id])kind[id]='manual';}});
+  Object.keys(map).forEach(id=>{if(!map[id])delete map[id];});
+  return {a,need,note,map,kind,F};
+}
+function resetBOver(){S.B.qty={};S.B.removed={};S.B.sent=null;}
+function measureHTML(){
+  const r=recBy(S.B.rec),m=S.B.m;
+  if(r.medida==='none')return `<p class="muted">No hace falta medir. Buscá los productos que necesitás en “Buscar productos manualmente”.</p>`;
+  const f=(k,l)=>`<label class="f" for="b-${k}">${l}<input class="in" id="b-${k}" data-bind="B.m.${k}" inputmode="decimal" value="${esc(m[k])}"></label>`;
+  let h='';
+  if(r.medida==='ambiente')h=`<div class="fields">${f('largo','Largo (m)')}${f('ancho','Ancho (m)')}${f('alto','Alto (m)')}${f('puertas','Puertas')}${f('ventanas','Ventanas')}</div>`;
+  else if(r.medida==='piso')h=`<div class="fields">${f('largo','Largo (m)')}${f('ancho','Ancho (m)')}</div>`;
+  else h=`<div class="fields">${f('m2','Superficie (m²)')}</div>`;
+  const ex=r.extras.map(e=>`<label class="chk" for="b-x-${e.key}"><input type="checkbox" id="b-x-${e.key}" data-bind="B.extras.${e.key}" ${S.B.extras[e.key]?'checked':''}><span>${esc(e.label)}<small>${esc(e.hint)}</small></span></label>`).join('');
+  const lbl=r.medida==='ambiente'?'Superficie de paredes':r.medida==='piso'?'Superficie del cielorraso':'Superficie a pintar';
+  return `${h}<p>${lbl}: <span class="area" id="b-area">${fmtNum(r1(areaB()))} m²</span></p>${ex}`;
+}
+function tierHTML(){
+  const F=famById[recBy(S.B.rec).fam];
+  if(!F)return `<p class="muted">Elegís la marca y la presentación de cada producto en el buscador.</p>`;
+  return `<div class="opts">${['eco','med','pre'].map(t=>{const big=P.find(p=>p.fam===F.fam&&p.tier===t&&p.size===F.sizes[0]);return `<button class="opt" aria-pressed="${S.B.tier===t}" data-act="tier" data-v="${t}"><b>${TIERS[t]}</b><small>Rinde ${fmtNum(F.rend[t])} m²/${F.unit} por mano</small><small>${fmt(big.price/big.size)} por ${F.unit}</small></button>`;}).join('')}</div>`;
+}
+function resultBHTML(){
+  const c=computeB(),l=lineItems(c.map);
+  if(!l.length)return `<div class="card"><h2>Tu lista</h2><p class="empty">${S.B.rec==='none'?'Elegí qué vas a pintar para calcular lo que necesitás, o buscá productos manualmente. Todo lo que sumes aparece acá.':'Completá las medidas para ver qué necesitás.'}</p></div>`;
+  const groups=[['pintura','Pintura'],['comp','Complementos'],['acc','Herramientas'],['manual','Agregados por vos']];
+  const tot=sumLines(l),accT=sumLines(l.filter(x=>c.kind[x.p.id]==='comp'||c.kind[x.p.id]==='acc'));
+  const body=groups.map(([k,lab])=>{const g=l.filter(x=>c.kind[x.p.id]===k);if(!g.length)return '';return `<li class="glabel">${lab}</li>`+g.map(x=>`<li class="line"><div><span class="pname">${esc(x.p.name)}</span><span class="ppres">${esc(x.p.pres)} · ${fmt(x.p.price)} c/u · <button class="x" data-act="rmB" data-pid="${x.p.id}">Quitar</button></span></div>${stepper('B',x.p.id,x.q)}<span class="num">${fmt(x.p.price*x.q)}</span></li>`).join('');}).join('');
+  let sent='';
+  if(S.B.sent){const p=S.pedidos.find(x=>x.id===S.B.sent);if(p){const txt=`Hola, quiero hacer este pedido (#${pad(p.id)}):\n`+p.items.map(i=>`• ${i.q} × ${byId[i.pid].name} ${byId[i.pid].pres}`).join('\n')+`\nTotal: ${fmt(pedTotal(p))}\nA nombre de: ${p.cliente}`;sent=`<div class="done"><b>Pedido #${pad(p.id)} enviado al local</b><p class="small">Le llega al local por WhatsApp y aparece en el panel del dueño como “a confirmar”. Cuando lo confirman, el cliente paga al retirar.</p><a class="btn primary" href="${waLink(STORE.wa,txt)}" target="_blank" rel="noopener">Abrir WhatsApp del local</a><pre class="msg">${esc(txt)}</pre><button class="btn sm" data-act="copy">Copiar mensaje</button></div>`;}}
+  return `<div class="card"><h2>Tu lista</h2>
+  ${c.note?`<p class="calc">${esc(c.note)}</p>`:''}
+  <ul class="lines">${body}</ul>
+  <div class="tot"><span>Total</span><span>${fmt(tot)}</span></div>
+  ${accT?`<p class="hook">Herramientas y complementos sumados solos: <b>${fmt(accT)}</b>, el ${pct(accT/tot)} del pedido. Esa es la venta extra que en el mostrador se olvida.</p>`:''}
+  <div class="fields"><label class="f" for="b-cli">Tu nombre<input class="in" id="b-cli" data-bind="B.cliente" value="${esc(S.B.cliente)}" placeholder="Nombre y apellido"></label><label class="f" for="b-tel">Tu WhatsApp<input class="in" id="b-tel" data-bind="B.tel" inputmode="tel" value="${esc(S.B.tel)}" placeholder="11 5555 0000"></label></div>
+  <button class="btn mp" data-act="payB">Pagar con Mercado Pago y pasar a retirar</button>
+  <button class="btn" data-act="waB">Prefiero mandarlo al local por WhatsApp y pagar al retirar</button>
+  ${sent}</div>`;
+}
+function listBHTML(){
+  const q=S.B.q.trim();
+  if(!q)return `<li class="empty">Escribí lo que buscás. Por ejemplo: barniz, pincel, cinta aisladora, sopapa.</li>`;
+  const w=norm(q).split(/\s+/).filter(Boolean);
+  const l=P.filter(p=>w.every(x=>norm(p.name+' '+p.pres+' '+p.cat).includes(x))).slice(0,12);
+  if(!l.length)return `<li class="empty">No encontramos “${esc(q)}” en la lista del local. <a href="${waLink(STORE.wa,'Hola, ¿tienen '+q+'?')}" target="_blank" rel="noopener">Preguntá por WhatsApp</a>.</li>`;
+  const map=computeB().map;
+  return l.map(p=>{const n=map[p.id]||0;return `<li class="prow"><div><span class="pname">${esc(p.name)}</span><span class="ppres">${esc(p.pres)}</span></div><div class="pprice"><b>${fmt(p.price)}</b></div>${n?stepper('B',p.id,n):`<button class="btn add sm" data-act="add" data-mode="B" data-pid="${p.id}" aria-label="Agregar ${esc(p.name)} ${esc(p.pres)}">Agregar</button>`}</li>`;}).join('');
+}
+function renderListB(){const ul=document.getElementById('plist-B');if(ul)ul.innerHTML=listBHTML();}
+function renderBResult(){const el=document.getElementById('b-result');if(el)el.innerHTML=resultBHTML();const a=document.getElementById('b-area');if(a)a.textContent=fmtNum(r1(areaB()))+' m²';}
+function viewB(){
+  return `${intro('B')}<div class="bwrap"><div class="stack">
+  <div class="card"><h2><span class="n">1</span>¿Qué vas a pintar?</h2><p class="small muted">Elegí una opción y calculamos cantidades y accesorios. Si solo querés comprar productos sueltos, usá el buscador de abajo.</p><div class="opts">${RECIPES.filter(r=>r.key!=='none').map(r=>`<button class="opt" aria-pressed="${S.B.rec===r.key}" data-act="rec" data-v="${r.key}"><b>${r.label}</b><small>${r.hint}</small></button>`).join('')}</div></div>
+  <div class="card"><h2>Buscar productos manualmente</h2><p class="small muted">Sumá cualquier producto del local a tu pedido, aunque no sea para lo que vas a pintar.</p>
+  <label class="sr" for="q-B">Buscar producto</label><input class="in" id="q-B" type="search" data-bind="B.q" placeholder="Buscar: barniz, cinta aisladora, sopapa…" value="${esc(S.B.q)}" autocomplete="off">
+  <ul class="plist" id="plist-B" style="max-height:420px">${listBHTML()}</ul></div>
+  ${S.B.rec==='none'?'':`<div class="card"><h2><span class="n">2</span>Medidas · ${esc(recBy(S.B.rec).label)}</h2><div id="b-measure" class="stack" style="gap:10px">${measureHTML()}</div></div>
+  <div class="card"><h2><span class="n">3</span>Calidad</h2>${tierHTML()}</div>`}
+  </div><div id="b-result">${resultBHTML()}</div></div>`;
+}
+
+/* C */
+function presuCalc(){
+  const l=lineItems(S.C.items),pub=sumLines(l),cost=sumLines(l,1-GREMIO),mo=r100(num(S.C.m2)*num(S.C.mo));
+  return {l,pub,cost,mo,total:pub+mo,gan:pub-cost};
+}
+function presuMsg(c){return `Hola ${S.C.cliente||''}, te paso el presupuesto para pintar ${fmtNum(num(S.C.m2))} m²:\n\nMateriales: ${fmt(c.pub)}\nMano de obra: ${fmt(c.mo)}\nTotal: ${fmt(c.total)}\n\nDetalle de materiales (${STORE.name}):\n`+c.l.map(x=>`• ${x.q} × ${x.p.name} ${x.p.pres}`).join('\n');}
+function presuHTML(){
+  const c=presuCalc();
+  return `<div class="sumrow"><span>Materiales a precio de lista</span><span class="num">${fmt(c.pub)}</span></div>
+  <div class="sumrow"><span>Mano de obra (${fmtNum(num(S.C.m2))} m² × ${fmt(num(S.C.mo))})</span><span class="num">${fmt(c.mo)}</span></div>
+  <div class="tot"><span>Total para tu cliente</span><span>${fmt(c.total)}</span></div>
+  <p class="hook">Vos pagás los materiales ${fmt(c.cost)} con precio de gremio. Diferencia a tu favor: <b>${fmt(c.gan)}</b>.</p>
+  ${S.C.presu?`<div class="done"><b>Mensaje para tu cliente</b><a class="btn primary" href="${waLink(S.C.tel,presuMsg(c))}" target="_blank" rel="noopener">Abrir WhatsApp</a><pre class="msg">${esc(presuMsg(c))}</pre><button class="btn sm" data-act="copy">Copiar mensaje</button></div>`:`<button class="btn" data-act="presuC" ${c.l.length?'':'disabled'}>Armar mensaje para mi cliente</button>`}`;
+}
+function cartCHTML(){
+  const l=lineItems(S.C.items),tot=sumLines(l,1-GREMIO),pub=sumLines(l);
+  return `<div class="card"><div class="cardhead"><h2>Hugo Ramírez · Pintor</h2><span class="pill prog">Gremio −${GREMIO*100}%</span></div>
+  <button class="btn sm" data-act="repeatC">Repetir mi último pedido</button>
+  ${l.length?`<ul class="lines">${l.map(x=>cartLine(x,'C',1-GREMIO)).join('')}</ul>`:`<p class="empty">Agregá materiales desde el catálogo.</p>`}
+  <div class="sumrow muted"><span>Precio de lista</span><span class="num"><s>${fmt(pub)}</s></span></div>
+  <div class="tot"><span>Tu precio</span><span>${fmt(tot)}</span></div>
+  <button class="btn primary big" data-act="buyC" ${l.length?'':'disabled'}>Comprar y pasar a retirar</button></div>
+  <div class="card"><h2>Presupuesto para tu cliente</h2>
+  <div class="fields"><label class="f" for="c-cli">Cliente<input class="in" id="c-cli" data-bind="C.cliente" value="${esc(S.C.cliente)}"></label><label class="f" for="c-tel">WhatsApp del cliente<input class="in" id="c-tel" data-bind="C.tel" inputmode="tel" value="${esc(S.C.tel)}" placeholder="11 5555 0000"></label><label class="f" for="c-m2">m² de la obra<input class="in" id="c-m2" data-bind="C.m2" inputmode="decimal" value="${esc(S.C.m2)}"></label><label class="f" for="c-mo">Mano de obra por m²<input class="in" id="c-mo" data-bind="C.mo" inputmode="decimal" value="${esc(S.C.mo)}"></label></div>
+  <div id="c-presu" class="stack" style="gap:8px">${presuHTML()}</div></div>`;
+}
+function viewC(){return `${intro('C')}<div class="grid"><div id="cat-C">${catalogHTML('C')}</div><div id="c-cart" class="stack">${cartCHTML()}</div></div>`;}
+
+/* Dueño */
+function stats(m){
+  const ps=S.pedidos.filter(p=>p.mode===m),n=ps.length;
+  const arm=ps.filter(p=>p.armado!=null);
+  const pag=ps.filter(p=>['pagado','preparando','listo','entregado'].includes(p.estado));
+  return {n,tick:pag.length?pag.reduce((s,p)=>s+pedTotal(p),0)/pag.length:0,acc:n?ps.reduce((s,p)=>s+pedAcc(p),0)/n:0,online:n?ps.filter(p=>p.online).length/n:0,arm:arm.length?arm.reduce((s,p)=>s+p.armado,0)/arm.length:null};
+}
+function kpiHTML(m){
+  const s=stats(m),c=MODES[m].color;
+  const tv=m==='A'?(s.arm!=null?mmss(s.arm)+' min por pedido':'Sin datos'):(m==='B'?'Ninguno, lo arma el cliente':'Ninguno, lo arma el pintor');
+  return `<div class="card kpi" style="--kc:${c};--m:${c}"><div class="row"><span class="mb">${m}</span><h3>${MODES[m].tab}</h3></div>
+  <dl><dt>Pedidos</dt><dd class="big">${s.n}</dd>
+  <dt>Ticket promedio (cobrados)</dt><dd>${fmt(s.tick)}</dd>
+  <dt>Herramientas y complementos</dt><dd>${pct(s.acc)} del ticket</dd>
+  <dt>Pagados online</dt><dd>${pct(s.online)}</dd>
+  <dt>Tiempo del vendedor</dt><dd>${tv}</dd></dl></div>`;
+}
+function orderHTML(p){
+  const f=FLOW[p.estado],c=MODES[p.mode].color;
+  let act='';
+  if(p.estado==='esperando')act+=`<button class="btn sm" data-act="preview" data-id="${p.id}">Ver link del cliente</button>`;
+  if(p.estado==='esperando'||p.estado==='confirmar')act+=`<button class="btn sm primary" style="--m:var(--ink);--on-m:var(--bg)" data-act="cobrar" data-id="${p.id}">Ya pagó: registrar cobro</button>`;
+  if(p.estado==='listo')act+=`<a class="btn sm" href="${waLink(p.tel,`Hola ${p.cliente.split(' ')[0]}, tu pedido #${pad(p.id)} de ${STORE.name} está listo. Podés pasar a retirarlo por ${STORE.addr} (${STORE.hours}).`)}" target="_blank" rel="noopener">Avisar por WhatsApp</a>`;
+  if(f)act+=`<button class="btn sm primary" data-act="adv" data-id="${p.id}">${f[1]}</button>`;
+  return `<li class="order"><span class="mb" style="--m:${c}">${p.mode}</span><div class="who"><b>#${pad(p.id)} · ${esc(p.cliente)}</b><span class="muted small">${p.items.reduce((s,i)=>s+i.q,0)} artículos · ${ago(p.t)}${p.online?' · pagó online':''}</span></div><span class="num"><b>${fmt(pedTotal(p))}</b></span><div class="oact"><span class="pill ${E[p.estado].cls}">${E[p.estado].label}</span>${act}</div>${detailHTML(p)}</li>`;
+}
+const ORIGEN={A:'Lo armó el vendedor',B:'Lo armó el cliente desde la app',C:'Pintor, con precio de gremio'};
+function pagoTxt(p){if(p.pago)return p.pago==='Mercado Pago'?'Mercado Pago':p.pago+' · cobrado en el local';if(p.online)return 'Mercado Pago (online)';if(p.estado==='esperando')return 'Pendiente: link enviado';if(p.estado==='confirmar')return 'Pendiente: paga al retirar';return 'Cobrado en el local';}
+function isOpen(p){return S.O.open[p.id]===true||(S.O.open[p.id]!==false&&['pagado','confirmar','preparando'].includes(p.estado));}
+function detailHTML(p){
+  const fecha=new Date(p.t).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+  return `<details class="odet" data-id="${p.id}" ${isOpen(p)?'open':''}><summary>Ver detalle del pedido</summary>
+  <div class="detgrid">
+   <dl class="dinfo"><dt>Cliente</dt><dd>${esc(p.cliente)}</dd><dt>WhatsApp</dt><dd>${p.tel?esc(p.tel):'—'}</dd><dt>Fecha</dt><dd>${fecha} h</dd><dt>Origen</dt><dd>${p.mostrador?'Venta en el mostrador':ORIGEN[p.mode]}</dd><dt>Pago</dt><dd>${pagoTxt(p)}</dd><dt>Entrega</dt><dd>Retira en el local</dd></dl>
+   <div class="tablewrap"><table class="det"><thead><tr><th scope="col">Cant.</th><th scope="col">Producto</th><th scope="col" class="r">Precio</th><th scope="col" class="r">Subtotal</th></tr></thead>
+   <tbody>${p.items.map(i=>{const pr=byId[i.pid];return `<tr><td class="num">${fmtNum(i.q)}</td><td>${esc(pr?pr.name:i.pid)} <span class="muted">${esc(pr?pr.pres:'')}</span></td><td class="r num">${fmt(i.price)}</td><td class="r num">${fmt(i.price*i.q)}</td></tr>`;}).join('')}</tbody>
+   <tfoot><tr><th scope="row" colspan="3">Total</th><td class="r num"><b>${fmt(pedTotal(p))}</b></td></tr></tfoot></table></div>
+  </div></details>`;
+}
+function priceRows(){
+  const w=norm(S.O.q).split(/\s+/).filter(Boolean);
+  const l=P.filter(p=>w.every(x=>norm(p.name+' '+p.pres).includes(x))).slice(0,14);
+  return l.length?l.map(p=>`<li class="prow"><div><span class="pname">${esc(p.name)}</span><span class="ppres">${esc(p.pres)}</span></div><label class="sr" for="pr-${p.id}">Precio de ${esc(p.name)} ${esc(p.pres)}</label><input class="in" id="pr-${p.id}" data-price="${p.id}" inputmode="numeric" value="${Math.round(p.price)}"></li>`).join(''):`<li class="empty">Ningún producto coincide.</li>`;
+}
+function cmpHTML(){
+  const rows=[
+    ['Quién arma el pedido','El vendedor, en el mostrador o por WhatsApp','El cliente, solo, desde el celular','El pintor, desde la obra'],
+    ['Qué tiene que saber el cliente','Nada','Qué va a pintar y las medidas','Todo: es profesional'],
+    ['Tiempo del vendedor','1 a 2 min por pedido','Ninguno','Ninguno'],
+    ['Funciona con el local cerrado','No','Sí','Sí'],
+    ['Cómo sube la venta','Depende de que el vendedor ofrezca accesorios','Suma herramientas y complementos solo','Cada obra del pintor compra en este local'],
+    ['Carga inicial para el dueño','Catálogo completo con precios','Los 30 a 50 productos más vendidos y las recetas','Catálogo completo y precio de gremio'],
+    ['Riesgo','El cliente igual depende de que lo atiendan','Si una receta está mal calculada, compra de más o de menos','Hay que conseguir pintores que la usen'],
+    ['Ideal para','Clientes que ya consultaron en el local','Clientes nuevos y consultas fuera de horario','Pintores y constructores que compran seguido']
+  ];
+  return `<div class="tablewrap"><table class="cmp"><thead><tr><th scope="col"></th>${['A','B','C'].map(m=>`<th scope="col" style="--m:${MODES[m].color}"><span class="mb">${m}</span>${MODES[m].tab}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><th scope="row">${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function viewO(){
+  const upd=S.priceUpdated?ago(S.priceUpdated):'todavía no se tocó en esta demo';
+  return `<div class="intro"><span class="mb">$</span><div><h2>Panel del dueño</h2><p>Todo lo que entra por las tres vías, en un solo lugar y con la misma lista de precios. Los números de arriba se actualizan con cada pedido que hagas en las otras pestañas.</p></div></div>
+  <div class="kpis">${['A','B','C'].map(kpiHTML).join('')}</div>
+  <div class="card"><div class="cardhead"><h2>Pedidos</h2><button class="btn sm" data-act="reset">Volver a los pedidos de ejemplo</button></div><ul class="orders">${S.pedidos.map(orderHTML).join('')}</ul></div>
+  <div class="card"><h2>¿Cuál conviene? Comparación de las tres formas</h2>${cmpHTML()}</div>
+  <div class="owner-grid">
+   <div class="card prices"><h2>Lista de precios</h2><p class="small muted">Cambiás un precio acá y queda al instante en las tres vías. Los pedidos ya hechos mantienen su precio. Última actualización: <b id="upd">${upd}</b>.</p>
+    <div class="row" style="align-items:flex-end"><label class="f" for="pct" style="flex:1">Aumentar todo (%)<input class="in" id="pct" inputmode="decimal" value="5"></label><button class="btn primary" data-act="applyPct">Aplicar a los ${P.length} productos</button></div>
+    <label class="sr" for="o-q">Buscar producto para editar</label><input class="in" id="o-q" type="search" data-bind="O.q" placeholder="Buscar producto para cambiar su precio" value="${esc(S.O.q)}">
+    <ul class="plist" id="price-list">${priceRows()}</ul></div>
+   <div class="card"><h2>Cómo leer esta demo</h2>
+    <p class="small">Probá el mismo pedido por las tres vías y mirá cómo cambian los números de arriba:</p>
+    <ul class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+     <li><b>Tiempo del vendedor:</b> en A se mide con el reloj del pedido. En B y C es cero.</li>
+     <li><b>Herramientas y complementos:</b> cuánto del ticket no es pintura. Es la venta extra que suma la receta.</li>
+     <li><b>Pagados online:</b> plata cobrada antes de que el cliente llegue al local.</li>
+     <li>Los links de WhatsApp abren de verdad con el mensaje armado. El link de pago y el cobro de Mercado Pago son simulados.</li>
+    </ul></div>
+  </div>`;
+}
+
+/* ---------- render ---------- */
+function checkPrueba(){
+  if(!PRUEBA_HASTA)return;const fin=new Date(PRUEBA_HASTA);if(isNaN(fin))return;
+  const show=()=>{if(Date.now()<fin.getTime())return false;const d=document.createElement('div');d.className='vencido';d.setAttribute('role','alertdialog');d.setAttribute('aria-modal','true');
+    const wa=CONTACTO_WA?waLink(CONTACTO_WA,`Hola, terminó la prueba de la app de ${STORE.name} y quiero seguir usándola.`):'';
+    d.innerHTML=`<div class="vbox"><h2>Terminó la prueba de 3 días</h2><p>Gracias por probar la app de <b>${esc(STORE.name)}</b>. Para seguir usándola con tus precios, tu logo y los pedidos en tiempo real, escribinos.</p>${wa?`<a class="btn wa big" href="${wa}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`:''}<p class="small muted">${esc(CONTACTO_NOMBRE)}</p></div>`;
+    document.body.appendChild(d);document.body.style.overflow='hidden';return true;};
+  if(!show()){const ms=fin.getTime()-Date.now();if(ms<2147483647)setTimeout(show,ms);}
+  const left=fin.getTime()-Date.now(),flag=document.querySelector('.flag');
+  if(flag&&left>0&&!SOLO_CLIENTE){const hrs=Math.ceil(left/3600000);flag.textContent=hrs>48?`Prueba: quedan ${Math.floor(hrs/24)} días`:`Prueba: quedan ${hrs} h`;}
+}
+function applySolo(){document.body.classList.toggle('solo',!!S.solo);const sb=document.getElementById('solobar');if(sb)sb.hidden=!S.solo;const h=document.getElementById('brandname');if(h)h.textContent=S.solo?STORE.name:'Demo Pinturería';}
+function render(){
+  tabs();
+  const app=document.getElementById('app');
+  const m={vendedor:'A',cliente:'B',pintor:'C'}[S.view];
+  app.style.setProperty('--m',m?MODES[m].color:'var(--ink)');
+  app.style.setProperty('--on-m',m?'var(--on-accent)':'var(--bg)');
+  app.innerHTML=S.view==='vendedor'?viewA():S.view==='cliente'?viewB():S.view==='pintor'?viewC():viewO();
+}
+function go(v){if(!VIEWS.includes(v))v='vendedor';S.view=v;try{if(location.hash!=='#'+v)history.replaceState(null,'','#'+v);}catch(e){}render();window.scrollTo(0,0);}
+
+/* ---------- modal: lo que ve el cliente ---------- */
+const modal=document.getElementById('modal'),mbody=document.getElementById('modal-body');
+let lastFocus=null;
+function cobroHTML(p){return `<div class="phone" style="--m:var(--ink)"><h2 style="font-size:18px;margin:0">Registrar cobro del pedido #${pad(p.id)}</h2><p class="small">${esc(p.cliente)} · <b>${fmt(pedTotal(p))}</b></p><p class="small muted">¿Cómo pagó?</p><div class="stack" style="gap:8px"><button type="button" class="opt" data-act="cobrarOk" data-id="${p.id}" data-v="Efectivo"><b>💵 Efectivo</b></button><button type="button" class="opt" data-act="cobrarOk" data-id="${p.id}" data-v="Transferencia"><b>🏦 Transferencia</b></button><button type="button" class="opt" data-act="cobrarOk" data-id="${p.id}" data-v="Débito"><b>💳 Débito</b></button><button type="button" class="opt" data-act="cobrarOk" data-id="${p.id}" data-v="Crédito"><b>💳 Crédito</b></button><button type="button" class="opt" data-act="cobrarOk" data-id="${p.id}" data-v="Mercado Pago"><b>📲 Mercado Pago</b></button></div><button class="btn" data-act="close">Cancelar</button></div>`;}
+function openModal(html){lastFocus=document.activeElement;mbody.innerHTML=html;modal.classList.add('open');const b=mbody.querySelector('button');if(b)b.focus();}
+function closeModal(){modal.classList.remove('open');mbody.innerHTML='';if(lastFocus&&document.contains(lastFocus))lastFocus.focus();}
+function phoneHead(){return `<div class="phone-head"><span class="logo">PD</span><div><b>${STORE.name}</b><small>${STORE.addr} · ${STORE.hours}</small></div></div>`;}
+function previewHTML(p){
+  return `<div class="phone" style="--m:${MODES[p.mode].color}">${phoneHead()}
+  <p>Hola ${esc(p.cliente.split(' ')[0])}, este es tu pedido <b>#${pad(p.id)}</b>:</p>
+  <ul class="lines">${p.items.map(i=>`<li class="line" style="grid-template-columns:minmax(0,1fr) auto"><div><span class="pname">${i.q} × ${esc(byId[i.pid].name)}</span><span class="ppres">${esc(byId[i.pid].pres)}</span></div><span class="num">${fmt(i.price*i.q)}</span></li>`).join('')}</ul>
+  <div class="tot"><span>Total</span><span>${fmt(pedTotal(p))}</span></div>
+  <p class="small muted">Retirás en ${STORE.addr}. Te avisamos por WhatsApp cuando esté listo.</p>
+  <button class="btn mp" data-act="pay" data-id="${p.id}">Pagar con Mercado Pago</button>
+  <button class="btn" data-act="close">Cerrar</button></div>`;
+}
+function paidHTML(p){
+  return `<div class="phone">${phoneHead()}<p class="ok-big">Pago aprobado</p><p>Tu pedido <b>#${pad(p.id)}</b> por <b>${fmt(pedTotal(p))}</b> ya está en el local. Te avisamos por WhatsApp cuando esté listo para retirar.</p><p class="small muted">Simulación: no se cobró nada. En el panel del dueño este pedido ahora figura como “Pagado · a preparar”.</p><button class="btn" data-act="close">Listo</button></div>`;
+}
+
+/* ---------- eventos ---------- */
+function changeQty(mode,pid,d){
+  if(mode==='B'){
+    const c=computeB();
+    if(S.B.extra[pid]!=null){const q=Math.max(0,S.B.extra[pid]+d);if(q)S.B.extra[pid]=q;else delete S.B.extra[pid];}
+    else if(!(pid in c.map)){if(d>0)S.B.extra[pid]=1;}
+    else{const q=Math.max(0,c.map[pid]+d);if(q===0)S.B.removed[pid]=1;else S.B.qty[pid]=q;}
+    S.B.sent=null;renderBResult();renderListB();return;
+  }
+  const st=S[mode];
+  if(mode==='A'){st.vendida=null;st.sent=null;}
+  if(mode==='A'&&!Object.keys(st.items).length)st.start=Date.now();
+  const q=Math.max(0,(st.items[pid]||0)+d);
+  if(q)st.items[pid]=q;else delete st.items[pid];
+  renderList(mode);
+  if(mode==='A'){document.getElementById('a-cart').innerHTML=cartAHTML();}
+  else{S.C.presu=false;document.getElementById('c-cart').innerHTML=cartCHTML();}
+}
+document.addEventListener('click',e=>{
+  if(e.target===modal){closeModal();return;}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,mode=b.dataset.mode,pid=b.dataset.pid,id=+b.dataset.id;
+  if(a==='solo'){if(!S.solo){S.prevView=S.view;S.solo=true;S.view='cliente';}else{S.solo=false;S.view=S.prevView||'vendedor';}render();applySolo();window.scrollTo(0,0);return;}
+  switch(a){
+    case 'tab':go(b.dataset.v);break;
+    case 'cat':S[mode].cat=b.dataset.v;b.parentElement.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===b)));renderList(mode);break;
+    case 'add':case 'inc':changeQty(mode,pid,1);break;
+    case 'dec':changeQty(mode,pid,-1);break;
+    case 'rmB':if(S.B.extra[pid]!=null)delete S.B.extra[pid];else S.B.removed[pid]=1;S.B.sent=null;renderBResult();renderListB();break;
+    case 'sendA':{S.A.linkOpen=true;const l=lineItems(S.A.items);if(!l.length)break;const d=Math.min(100,num(S.A.desc));const p=crearPedido('A',S.A.items,{cliente:S.A.cliente,tel:S.A.tel,estado:'esperando',factor:1-d/100,armado:(Date.now()-S.A.start)/1000});S.A.sent=p.id;tabs();document.getElementById('a-cart').innerHTML=cartAHTML();break;}
+    case 'newA':S.A=freshA();render();break;
+    case 'vendA':{const l=lineItems(S.A.items);if(!l.length)break;const d=Math.min(100,num(S.A.desc));const p=crearPedido('A',S.A.items,{cliente:'Venta en el mostrador',estado:'entregado',factor:1-d/100,armado:(Date.now()-S.A.start)/1000});p.pago=b.dataset.v;p.mostrador=true;save();const q=S.A.q;S.A=freshA();S.A.vendida=p.id;S.A.q='';renderList('A');const qi=document.getElementById('q-A');if(qi)qi.value='';document.getElementById('a-cart').innerHTML=cartAHTML();tabs();break;}
+    case 'preview':{const p=S.pedidos.find(x=>x.id===id);if(p)openModal(previewHTML(p));break;}
+    case 'pay':{const p=S.pedidos.find(x=>x.id===id);if(!p)break;p.estado='pagado';p.online=true;save();mbody.innerHTML=paidHTML(p);mbody.querySelector('button').focus();tabs();if(S.view==='duenio')render();break;}
+    case 'close':closeModal();break;
+    case 'copy':{const pre=b.closest('.done')&&b.closest('.done').querySelector('.msg');if(!pre)break;try{navigator.clipboard.writeText(pre.textContent).then(()=>{b.textContent='Copiado';},()=>{b.textContent='No se pudo copiar';});}catch(err){b.textContent='No se pudo copiar';}break;}
+    case 'rec':S.B.rec=S.B.rec===b.dataset.v?'none':b.dataset.v;initExtras();resetBOver();render();break;
+    case 'tier':S.B.tier=b.dataset.v;resetBOver();b.parentElement.querySelectorAll('.opt').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));renderBResult();break;
+    case 'payB':{const c=computeB();if(!Object.keys(c.map).length)break;const p=crearPedido('B',c.map,{cliente:S.B.cliente||'Cliente web',tel:S.B.tel,estado:'esperando'});tabs();openModal(previewHTML(p));break;}
+    case 'waB':{const c=computeB();if(!Object.keys(c.map).length)break;const p=crearPedido('B',c.map,{cliente:S.B.cliente||'Cliente web',tel:S.B.tel,estado:'confirmar'});S.B.sent=p.id;tabs();renderBResult();break;}
+    case 'repeatC':S.C.items={...LAST_C};S.C.presu=false;renderList('C');document.getElementById('c-cart').innerHTML=cartCHTML();break;
+    case 'buyC':{const l=lineItems(S.C.items);if(!l.length)break;const p=crearPedido('C',S.C.items,{cliente:'Hugo Ramírez (pintor)',estado:'esperando',factor:1-GREMIO});tabs();openModal(previewHTML(p));break;}
+    case 'presuC':S.C.presu=true;document.getElementById('c-presu').innerHTML=presuHTML();break;
+    case 'cobrar':{const p=S.pedidos.find(x=>x.id===id);if(p)openModal(cobroHTML(p));break;}
+    case 'cobrarOk':{const p=S.pedidos.find(x=>x.id===id);if(!p)break;p.estado='pagado';p.pago=b.dataset.v;p.online=b.dataset.v==='Mercado Pago';p.cobrado=Date.now();save();closeModal();tabs();render();(typeof toast==='function')&&toast('Pedido #'+pad(p.id)+' cobrado: '+b.dataset.v.toLowerCase()+'. Pasó a «Pagado».');break;}
+    case 'adv':{const p=S.pedidos.find(x=>x.id===id);if(p&&FLOW[p.estado]){p.estado=FLOW[p.estado][0];save();render();}break;}
+    case 'applyPct':{const v=parseFloat(String(document.getElementById('pct').value).replace(',','.'));if(!isFinite(v)||v===0)break;P.forEach(p=>p.price=r100(p.price*(1+v/100)));S.priceUpdated=Date.now();save();render();break;}
+    case 'reset':try{localStorage.removeItem(KEY);}catch(err){}location.hash='#duenio';location.reload();break;
+  }
+});
+function setPath(path,val){const k=path.split('.');let o=S;for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=val;}
+function onBind(el){
+  const path=el.dataset.bind;if(!path)return;
+  setPath(path,el.type==='checkbox'?el.checked:el.value);
+  if(path==='A.q'||path==='C.q')renderList(path[0]);
+  else if(path==='B.q')renderListB();
+  else if(path==='A.desc'){const t=document.getElementById('a-totals');if(t)t.innerHTML=totalsA();}
+  else if(path.startsWith('B.m.')||path.startsWith('B.extras.')){resetBOver();renderBResult();}
+  else if(path==='C.m2'||path==='C.mo'||path==='C.cliente'||path==='C.tel'){S.C.presu=false;const p=document.getElementById('c-presu');if(p)p.innerHTML=presuHTML();}
+  else if(path==='O.q'){const l=document.getElementById('price-list');if(l)l.innerHTML=priceRows();}
+}
+document.addEventListener('input',e=>{if(e.target.type!=='checkbox')onBind(e.target);});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.type==='checkbox'){onBind(el);return;}
+  if(el.dataset.price){const p=byId[el.dataset.price],v=num(el.value);if(p&&v){p.price=r100(v);el.value=p.price;S.priceUpdated=Date.now();save();const u=document.getElementById('upd');if(u)u.textContent=ago(S.priceUpdated);}else if(p){el.value=p.price;}}
+});
+document.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classList.contains('alink'))S.A.linkOpen=d.open;if(d.classList&&d.classList.contains('odet'))S.O.open[d.dataset.id]=d.open;},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal();});
+window.addEventListener('hashchange',()=>{if(S.solo)return;const v=location.hash.slice(1);if(VIEWS.includes(v)&&v!==S.view){S.view=v;render();}});
+setInterval(()=>{const t=document.getElementById('a-timer');if(t)t.textContent=timerTxt();},1000);
+
+const SOLO_CLIENTE=(()=>{try{return new URLSearchParams(location.search).has('cliente');}catch(e){return false;}})();
+const h=location.hash.slice(1);
+S.view=VIEWS.includes(h)?h:'vendedor';
+if(SOLO_CLIENTE){S.solo=true;S.view='cliente';document.body.classList.add('solo-fijo');}
+render();applySolo();checkPrueba();
+})();
+</script>
+<!--tabs--><script>(function(){
+var CH='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>';
+var CHL='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>';
+var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,nudged=false;
+function bgOf(el){while(el&&el.nodeType===1){var c=getComputedStyle(el).backgroundColor;if(c&&c!=='transparent'&&!/,\s*0\)$/.test(c))return c;el=el.parentElement;}return '#fff';}
+function setup(n){
+ if(n.getAttribute('data-tm'))return;n.setAttribute('data-tm','1');
+ var cs=getComputedStyle(n),w=document.createElement('div');w.className='tabwrap';
+ ['flex','gridColumn','gridRow','gridArea','alignSelf','order','marginTop','marginBottom','marginLeft','marginRight'].forEach(function(k){if(cs[k])w.style[k]=cs[k];});
+ n.style.margin='0';n.parentNode.insertBefore(w,n);w.appendChild(n);
+ function mk(d){var b=document.createElement('button');b.type='button';b.className='tabmore tabmore-'+d;b.tabIndex=-1;
+  b.setAttribute('aria-label',d==='l'?'Ver secciones anteriores':'Hay más secciones: ver más');b.innerHTML='<i>'+(d==='l'?CHL:CH)+'</i>';
+  b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();n.scrollBy({left:(d==='l'?-1:1)*Math.max(120,n.clientWidth*.7),behavior:RM?'auto':'smooth'});});w.appendChild(b);}
+ mk('l');mk('r');var sel=null;
+ function upd(){var max=n.scrollWidth-n.clientWidth;w.classList.toggle('can-l',n.scrollLeft>4);w.classList.toggle('can-r',n.scrollLeft<max-4);
+  w.style.setProperty('--tabbg',bgOf(w.parentElement));var t=n.querySelector('[aria-selected="true"]')||n.querySelector('.tab')||n.firstElementChild;
+  if(t)w.style.setProperty('--tabfg',getComputedStyle(t).color);
+  var s=n.querySelector('[aria-selected="true"]');if(s&&s!==sel){var first=!sel;sel=s;var l=s.offsetLeft-n.offsetLeft,r=l+s.offsetWidth;
+   if(l<n.scrollLeft+8||r>n.scrollLeft+n.clientWidth-46)n.scrollTo({left:Math.max(0,l-n.clientWidth/2+s.offsetWidth/2),behavior:(first||RM)?'auto':'smooth'});}}
+ n.addEventListener('scroll',upd,{passive:true});window.addEventListener('resize',upd);
+ new MutationObserver(function(){requestAnimationFrame(upd);}).observe(n,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-selected','class','hidden']});
+ if(window.ResizeObserver)new ResizeObserver(upd).observe(n);
+ upd();setTimeout(upd,400);
+ if(!nudged&&!RM&&n.id==='tabs'){nudged=true;setTimeout(function(){if(n.scrollWidth-n.clientWidth>8&&n.scrollLeft<4){n.scrollTo({left:56,behavior:'smooth'});setTimeout(function(){n.scrollTo({left:0,behavior:'smooth'});},650);}},900);}
+}
+function scan(){var L=document.querySelectorAll('#tabs,[role="tablist"]');for(var i=0;i<L.length;i++){var ox=getComputedStyle(L[i]).overflowX;if(L[i].id==='tabs'||ox==='auto'||ox==='scroll')setup(L[i]);}}
+var q=false;function later(){if(q)return;q=true;requestAnimationFrame(function(){q=false;scan();});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scan);else scan();
+new MutationObserver(later).observe(document.documentElement,{childList:true,subtree:true});
+})();</script><!--/tabs-->
+</body>
+</html>
